@@ -1,3 +1,4 @@
+import { format } from "@formkit/tempo";
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
@@ -28,9 +29,22 @@ export default {
 
     console.log(JSON.stringify(habits));
 
+    const today = new Date();
+    // 先月1日0:00:00
+    const from = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1,
+      0,
+      0,
+      0,
+    );
+    // 先月の末日23:59:59
+    const to = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+
     const searchParams = new URLSearchParams({
-      from: "2024-09-01T00:00:00+09:00",
-      to: "2024-09-30T23:59:59+09:00",
+      from: format(from, "YYYY-MM-DDTHH:mm:ssZ"),
+      to: format(to, "YYYY-MM-DDTHH:mm:ssZ"),
     });
     for (const habit of habits) {
       const response = await fetch(
