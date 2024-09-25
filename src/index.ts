@@ -14,6 +14,25 @@ import { format } from "@formkit/tempo";
 
 const HABITIFY_API_KEY = "xxxx";
 
+type NoteCount = {
+  [note: string]: number;
+};
+
+type NoteCountByHabit = {
+  [habitName: string]: NoteCount;
+};
+
+type Habit = {
+  id: string;
+  name: string;
+};
+
+type Note = {
+  id: string;
+  content: string;
+  habit_id: string;
+};
+
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     const response = await fetch("https://api.habitify.me/habits", {
@@ -21,8 +40,8 @@ export default {
         Authorization: HABITIFY_API_KEY,
       },
     });
-    const json = (await response.json()) as { data: any };
-    const habits = json.data.map((data: { id: any; name: any }) => ({
+    const json = (await response.json()) as { data: Habit[] };
+    const habits = json.data.map((data) => ({
       id: data.id,
       name: data.name,
     }));
@@ -46,6 +65,9 @@ export default {
       from: format(from, "YYYY-MM-DDTHH:mm:ssZ"),
       to: format(to, "YYYY-MM-DDTHH:mm:ssZ"),
     });
+
+    const noteCountsByHabit: NoteCountByHabit = {};
+
     for (const habit of habits) {
       const response = await fetch(
         `https://api.habitify.me/notes/${habit.id}?${searchParams.toString()}`,
@@ -55,9 +77,10 @@ export default {
           },
         },
       );
-      const json = (await response.json()) as { data: any };
-      const contentCount = json.data.reduce(
-        (acc: { [x: string]: any }, item: { content: string | number }) => {
+      const json = (await response.json()) as { data: Note[] };
+      console.log(json);
+      const notesCount = json.data.reduce(
+        (acc: { [note: string]: number }, item) => {
           // アイテムの content をキーにして集計
           acc[item.content] = (acc[item.content] || 0) + 1;
           return acc;
@@ -65,11 +88,11 @@ export default {
         {},
       );
 
-      console.log(contentCount);
+      console.log(notesCount);
       // console.log(json);
       // json.data.
+      noteCountsByHabit[habit.name] = notesCount;
     }
-    // const notesResponse =await fetch('https://api.habitify.me/notes', {
-    return new Response("Hello Worker!");
+    return new Response(JSON.stringify(noteCountsByHabit));
   },
 } satisfies ExportedHandler<Env>;
