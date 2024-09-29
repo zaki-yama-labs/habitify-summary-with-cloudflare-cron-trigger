@@ -1,4 +1,5 @@
 import { format } from "@formkit/tempo";
+import { postToSlack } from "./slack";
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
@@ -18,7 +19,7 @@ type NoteCount = {
   [note: string]: number;
 };
 
-type NoteCountByHabit = {
+export type NoteCountByHabit = {
   [habitName: string]: NoteCount;
 };
 
@@ -93,6 +94,7 @@ export default {
       // json.data.
       noteCountsByHabit[habit.name] = notesCount;
     }
+    await postToSlack(noteCountsByHabit);
     return new Response(JSON.stringify(noteCountsByHabit));
   },
 } satisfies ExportedHandler<Env>;
