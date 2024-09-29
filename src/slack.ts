@@ -1,13 +1,11 @@
 import type { NoteCountByHabit } from ".";
 
-const WEBHOOK_URL = "xxxx";
-
-export async function postToSlack(habits: NoteCountByHabit) {
+export async function postToSlack(webhookUrl: string, habits: NoteCountByHabit) {
   const blocks = buildBlocks(habits);
   const body = JSON.stringify({ blocks });
 
   try {
-    const response = await fetch(WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

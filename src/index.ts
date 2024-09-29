@@ -13,8 +13,6 @@ import { postToSlack } from "./slack";
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-const HABITIFY_API_KEY = "xxxx";
-
 type NoteCount = {
   [note: string]: number;
 };
@@ -34,10 +32,10 @@ type Note = {
   habit_id: string;
 };
 
-async function main() {
+async function main(env: Env) {
   const response = await fetch("https://api.habitify.me/habits", {
     headers: {
-      Authorization: HABITIFY_API_KEY,
+      Authorization: env.HABITIFY_API_KEY,
     },
   });
   const json = (await response.json()) as { data: Habit[] };
@@ -66,7 +64,7 @@ async function main() {
       `https://api.habitify.me/notes/${habit.id}?${searchParams.toString()}`,
       {
         headers: {
-          Authorization: HABITIFY_API_KEY,
+          Authorization: env.HABITIFY_API_KEY,
         },
       },
     );
@@ -86,13 +84,13 @@ async function main() {
     // json.data.
     noteCountsByHabit[habit.name] = notesCount;
   }
-  await postToSlack(noteCountsByHabit);
+  await postToSlack(env.SLACK_WEBHOOK_URL, noteCountsByHabit);
 }
 
 export default {
   async scheduled(event, env, ctx) {
     console.log(event.cron);
     console.log(new Date(event.scheduledTime));
-    ctx.waitUntil(main());
+    ctx.waitUntil(main(env));
   },
 } satisfies ExportedHandler<Env>;
