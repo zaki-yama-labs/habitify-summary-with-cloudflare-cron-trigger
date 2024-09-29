@@ -34,67 +34,65 @@ type Note = {
   habit_id: string;
 };
 
-export default {
-  async fetch(request, env, ctx): Promise<Response> {
-    const response = await fetch("https://api.habitify.me/habits", {
-      headers: {
-        Authorization: HABITIFY_API_KEY,
+async function main() {
+  const response = await fetch("https://api.habitify.me/habits", {
+    headers: {
+      Authorization: HABITIFY_API_KEY,
+    },
+  });
+  const json = (await response.json()) as { data: Habit[] };
+  const habits = json.data.map((data) => ({
+    id: data.id,
+    name: data.name,
+  }));
+
+  console.log(JSON.stringify(habits));
+
+  const today = new Date();
+  // 先月1日0:00:00
+  const from = new Date(today.getFullYear(), today.getMonth() - 1, 1, 0, 0, 0);
+  // 先月の末日23:59:59
+  const to = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+
+  const searchParams = new URLSearchParams({
+    from: format(from, "YYYY-MM-DDTHH:mm:ssZ"),
+    to: format(to, "YYYY-MM-DDTHH:mm:ssZ"),
+  });
+
+  const noteCountsByHabit: NoteCountByHabit = {};
+
+  for (const habit of habits) {
+    const response = await fetch(
+      `https://api.habitify.me/notes/${habit.id}?${searchParams.toString()}`,
+      {
+        headers: {
+          Authorization: HABITIFY_API_KEY,
+        },
       },
-    });
-    const json = (await response.json()) as { data: Habit[] };
-    const habits = json.data.map((data) => ({
-      id: data.id,
-      name: data.name,
-    }));
-
-    console.log(JSON.stringify(habits));
-
-    const today = new Date();
-    // 先月1日0:00:00
-    const from = new Date(
-      today.getFullYear(),
-      today.getMonth() - 1,
-      1,
-      0,
-      0,
-      0,
     );
-    // 先月の末日23:59:59
-    const to = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+    const json = (await response.json()) as { data: Note[] };
+    console.log(json);
+    const notesCount = json.data.reduce(
+      (acc: { [note: string]: number }, item) => {
+        // アイテムの content をキーにして集計
+        acc[item.content] = (acc[item.content] || 0) + 1;
+        return acc;
+      },
+      {},
+    );
 
-    const searchParams = new URLSearchParams({
-      from: format(from, "YYYY-MM-DDTHH:mm:ssZ"),
-      to: format(to, "YYYY-MM-DDTHH:mm:ssZ"),
-    });
+    console.log(notesCount);
+    // console.log(json);
+    // json.data.
+    noteCountsByHabit[habit.name] = notesCount;
+  }
+  await postToSlack(noteCountsByHabit);
+}
 
-    const noteCountsByHabit: NoteCountByHabit = {};
-
-    for (const habit of habits) {
-      const response = await fetch(
-        `https://api.habitify.me/notes/${habit.id}?${searchParams.toString()}`,
-        {
-          headers: {
-            Authorization: HABITIFY_API_KEY,
-          },
-        },
-      );
-      const json = (await response.json()) as { data: Note[] };
-      console.log(json);
-      const notesCount = json.data.reduce(
-        (acc: { [note: string]: number }, item) => {
-          // アイテムの content をキーにして集計
-          acc[item.content] = (acc[item.content] || 0) + 1;
-          return acc;
-        },
-        {},
-      );
-
-      console.log(notesCount);
-      // console.log(json);
-      // json.data.
-      noteCountsByHabit[habit.name] = notesCount;
-    }
-    await postToSlack(noteCountsByHabit);
-    return new Response(JSON.stringify(noteCountsByHabit));
+export default {
+  async scheduled(event, env, ctx) {
+    console.log(event.cron);
+    console.log(new Date(event.scheduledTime));
+    ctx.waitUntil(main());
   },
 } satisfies ExportedHandler<Env>;
