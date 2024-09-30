@@ -84,6 +84,7 @@ async function main(env: Env) {
     // json.data.
     noteCountsByHabit[habit.name] = notesCount;
   }
+  console.log(JSON.stringify(noteCountsByHabit));
   await postToSlack(env.SLACK_WEBHOOK_URL, noteCountsByHabit);
 }
 
