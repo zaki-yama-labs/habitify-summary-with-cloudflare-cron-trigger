@@ -6,8 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [triggers]
 # Schedule cron triggers:
-# - At 9AM on first day of the month
-crons = ["0 9 1 * *"]
+# - At 9AM (JTC) on first day of the month
+crons = ["0 0 1 * *"]
 
 [observability]
 enabled = true
