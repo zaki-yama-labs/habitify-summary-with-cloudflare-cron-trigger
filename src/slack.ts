@@ -12,6 +12,10 @@ export async function postToSlack(webhookUrl: string, habits: NoteCountByHabit) 
       },
       body,
     });
+    if (!response.ok) {
+      const text = await response.text();
+      console.error(`ERROR (${response.status}): ${response.statusText}. ${text}`);
+    }
   } catch (error) {
     console.error(error);
   }
