@@ -39,7 +39,7 @@ function buildBlocks(habits: NoteCountByHabit) {
         {
           type: "rich_text_preformatted",
           border: 0,
-          elements: [{ type: "text", text: noteCountsString }],
+          elements: [{ type: "text", text: noteCountsString || 'none'}],
         },
       ],
     });
