@@ -4,6 +4,7 @@ export async function postToSlack(webhookUrl: string, habits: NoteCountByHabit) 
   const blocks = buildBlocks(habits);
   const body = JSON.stringify({ blocks });
 
+  console.log(body);
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
